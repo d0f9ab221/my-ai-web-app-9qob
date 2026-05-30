@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WebPify - Premium Image to WebP Converter</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- JSZip for batch download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+  <style>
+/* --- CSS: /styles.css --- */
+/* Custom Animations & Premium UI Enhancements */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #10b981;
+}
+
+/* Custom Range Input Styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #1e293b;
+  border-radius: 9999px;
+  height: 6px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #10b981;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: #34d399;
+}
+
+/* Active State for Resize Mode Buttons */
+.resize-mode-btn {
+  background-color: #09090b;
+  border-color: #1e293b;
+  color: #94a3b8;
+}
+
+.resize-mode-btn:hover {
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.resize-mode-btn.active {
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.05);
+}
+
+/* Grid background for image comparison */
+.bg-grid-pattern {
+  background-size: 20px 20px;
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+}
+</style></head>
+  <body class="bg-[#09090b] text-slate-100 font-['Inter'] min-h-screen flex flex-col selection:bg-emerald-500 selection:text-black">
+    
+    <!-- Header -->
+    <header class="border-b border-slate-800/80 bg-[#09090b]/90 backdrop-blur sticky top-0 z-50 px-6 py-4">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/5">
+            <i data-lucide="image-up" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+              WebPify <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v2.0 PRO</span>
+            </h1>
+            <p class="text-xs text-slate-400">High-performance client-side WebP converter & resizer</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+          <div class="hidden md:flex items-center gap-2 text-xs text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>100% Private & Secure (Local Processing)</span>
+          </div>
+          <button id="btn-reset-all" class="text-xs font-medium text-slate-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-slate-800/60 transition-all flex items-center gap-1.5">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            Reset Workspace
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Left Column: Controls & Configuration (5 Cols) -->
+      <section class="lg:col-span-5 space-y-6">
+        
+        <!-- Upload Box -->
+        <div id="dropzone" class="border-2 border-dashed border-slate-800 hover:border-emerald-500/50 bg-slate-950/40 hover:bg-slate-900/20 rounded-2xl p-8 text-center cursor-pointer transition-all group relative overflow-hidden">
+          <input type="file" id="file-input" multiple accept="image/*" class="hidden" />
+          <div class="space-y-4 pointer-events-none">
+            <div class="mx-auto w-14 h-14 rounded-full bg-slate-900 flex items-center justify-center border border-slate-800 group-hover:scale-110 group-hover:border-emerald-500/30 group-hover:bg-emerald-950/20 transition-all duration-300">
+              <i data-lucide="upload-cloud" class="w-7 h-7 text-slate-400 group-hover:text-emerald-400 transition-colors"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">Drag & drop your images here</p>
+              <p class="text-xs text-slate-400 mt-1">Supports PNG, JPEG, GIF, BMP, AVIF, WebP</p>
+            </div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 text-xs text-slate-300 border border-slate-800">
+              <i data-lucide="plus" class="w-3 h-3"></i> Browse Files
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuration Panel -->
+        <div class="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-5 space-y-6 shadow-xl">
+          <div class="flex items-center justify-between border-b border-slate-800/60 pb-3">
+            <h2 class="font-bold text-sm tracking-wide uppercase text-slate-300 flex items-center gap-2">
+              <i data-lucide="sliders" class="w-4 h-4 text-emerald-400"></i>
+              Conversion Settings
+            </h2>
+            <span class="text-[10px] font-mono text-slate-500">Real-time updates</span>
+          </div>
+
+          <!-- Quality Slider -->
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs font-medium">
+              <span class="text-slate-300 flex items-center gap-1.5">
+                Quality (Compression)
+                <span class="group relative cursor-help text-slate-500 hover:text-slate-300">
+                  <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+                  <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-900 text-[10px] text-slate-300 rounded shadow-xl border border-slate-800 hidden group-hover:block z-50 font-normal">
+                    Lower quality means smaller file sizes. 80-85% is recommended for optimal balance.
+                  </span>
+                </span>
+              </span>
+              <span id="quality-val" class="font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">80%</span>
+            </div>
+            <input type="range" id="quality-slider" min="5" max="100" value="80" class="w-full accent-emerald-500 bg-slate-800 h-1.5 rounded-lg cursor-pointer" />
+          </div>
+
+          <!-- Resize Mode Selector -->
+          <div class="space-y-3">
+            <label class="text-xs font-medium text-slate-300 block">Resize Strategy</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" data-mode="original" class="resize-mode-btn active px-3 py-2 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-1">
+                <i data-lucide="maximize" class="w-4 h-4"></i>
+                <span>Original</span>
+              </button>
+              <button type="button" data-mode="custom" class="resize-mode-btn px-3 py-2 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-1">
+                <i data-lucide="settings-2" class="w-4 h-4"></i>
+                <span>Custom px</span>
+              </button>
+              <button type="button" data-mode="scale" class="resize-mode-btn px-3 py-2 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-1">
+                <i data-lucide="percent" class="w-4 h-4"></i>
+                <span>Scale %</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Custom Dimensions Panel (Conditional) -->
+          <div id="custom-dimensions-panel" class="hidden space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/80 animate-fadeIn">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1.5">
+                <label class="text-[11px] font-medium text-slate-400 block">Width (px)</label>
+                <input type="number" id="resize-width" placeholder="e.g. 1920" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-lg px-3 py-2 text-sm font-mono text-white outline-none transition-all" />
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-[11px] font-medium text-slate-400 block">Height (px)</label>
+                <input type="number" id="resize-height" placeholder="e.g. 1080" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 rounded-lg px-3 py-2 text-sm font-mono text-white outline-none transition-all" />
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <label for="lock-aspect" class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                <input type="checkbox" id="lock-aspect" checked class="rounded border-slate-800 text-emerald-500 focus:ring-emerald-500/30 bg-slate-950 w-4 h-4" />
+                Maintain Aspect Ratio
+              </label>
+              <span class="text-[10px] text-slate-500 font-mono" id="aspect-ratio-indicator">Locked</span>
+            </div>
+
+            <!-- Quick Presets -->
+            <div class="space-y-1.5">
+              <span class="text-[11px] font-medium text-slate-400 block">Quick Presets</span>
+              <div class="flex flex-wrap gap-1.5" id="presets-container">
+                <!-- Rendered dynamically from data.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Scale Slider Panel (Conditional) -->
+          <div id="scale-panel" class="hidden space-y-2 p-4 bg-slate-900/50 rounded-xl border border-slate-800/80 animate-fadeIn">
+            <div class="flex justify-between text-xs font-medium">
+              <span class="text-slate-300">Scale Factor</span>
+              <span id="scale-val" class="font-mono text-emerald-400 font-bold">100%</span>
+            </div>
+            <input type="range" id="scale-slider" min="10" max="100" value="100" step="5" class="w-full accent-emerald-500 bg-slate-800 h-1.5 rounded-lg cursor-pointer" />
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>10% (Tiny)</span>
+              <span>50%</span>
+              <span>100% (Original)</span>
+            </div>
+          </div>
+
+          <!-- File Naming Options -->
+          <div class="space-y-3 pt-2 border-t border-slate-800/60">
+            <label class="text-xs font-medium text-slate-300 block">File Naming Pattern</label>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="space-y-1">
+                <span class="text-[10px] text-slate-500 block">Prefix</span>
+                <input type="text" id="filename-prefix" placeholder="e.g. webp-" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500/50 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white outline-none" />
+              </div>
+              <div class="space-y-1">
+                <span class="text-[10px] text-slate-500 block">Suffix</span>
+                <input type="text" id="filename-suffix" placeholder="e.g. -min" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500/50 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white outline-none" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Pro Tips / Stats Summary Card -->
+        <div class="bg-gradient-to-br from-slate-950 to-slate-900 border border-slate-800/80 rounded-2xl p-5 space-y-4">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400"></i>
+            Why WebP?
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            WebP images are up to <strong class="text-emerald-400">30% smaller</strong> than JPEGs and PNGs without losing noticeable quality. They speed up website loading times and save bandwidth.
+          </p>
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/50 text-center">
+            <div class="p-2 bg-slate-900/60 rounded-lg border border-slate-800">
+              <div class="text-lg font-bold text-emerald-400 font-mono" id="stat-total-saved">0%</div>
+              <div class="text-[10px] text-slate-500">Avg. Space Saved</div>
+            </div>
+            <div class="p-2 bg-slate-900/60 rounded-lg border border-slate-800">
+              <div class="text-lg font-bold text-white font-mono" id="stat-total-files">0</div>
+              <div class="text-[10px] text-slate-500">Files Converted</div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Right Column: Batch List & Interactive Preview (7 Cols) -->
+      <section class="lg:col-span-7 space-y-6 flex flex-col">
+        
+        <!-- Batch List Card -->
+        <div class="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-5 flex-1 flex flex-col min-h-[350px] shadow-xl">
+          <div class="flex items-center justify-between border-b border-slate-800/60 pb-3 mb-4">
+            <div class="flex items-center gap-2">
+              <h2 class="font-bold text-sm tracking-wide uppercase text-slate-300">
+                Queue & Batch Processing
+              </h2>
+              <span id="queue-count" class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full font-mono">0 files</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-convert-all" disabled class="disabled:opacity-40 disabled:cursor-not-allowed bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 shadow-lg shadow-emerald-500/10">
+                <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+                Convert All
+              </button>
+              <button id="btn-download-all" disabled class="disabled:opacity-40 disabled:cursor-not-allowed bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 border border-slate-700">
+                <i data-lucide="download-cloud" class="w-3.5 h-3.5"></i>
+                Download ZIP
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div id="queue-empty-state" class="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-3">
+            <div class="w-16 h-16 rounded-full bg-slate-900/50 border border-slate-800 flex items-center justify-center text-slate-600">
+              <i data-lucide="images" class="w-8 h-8"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-slate-400">No images in queue</p>
+              <p class="text-xs text-slate-500 max-w-xs mt-1">Upload images using the panel on the left to start customizing and converting.</p>
+            </div>
+          </div>
+
+          <!-- Queue List -->
+          <div id="queue-list" class="hidden flex-1 overflow-y-auto max-h-[400px] space-y-2.5 pr-1">
+            <!-- Dynamic items go here -->
+          </div>
+        </div>
+
+        <!-- Interactive Side-by-Side Comparison Slider -->
+        <div id="comparison-card" class="hidden bg-slate-950/80 border border-slate-800/80 rounded-2xl p-5 space-y-4 shadow-xl animate-fadeIn">
+          <div class="flex items-center justify-between border-b border-slate-800/60 pb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="split" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="font-bold text-sm tracking-wide uppercase text-slate-300">Visual Quality Comparison</h3>
+            </div>
+            <span class="text-xs text-slate-400" id="comparison-filename">image.png</span>
+          </div>
+
+          <!-- Slider Container -->
+          <div class="relative w-full h-[320px] rounded-xl overflow-hidden bg-slate-900 border border-slate-800 select-none group" id="comparison-slider-container">
+            
+            <!-- Original Image (Left / Background) -->
+            <div class="absolute inset-0 w-full h-full">
+              <img id="comparison-img-original" src="" alt="Original" class="w-full h-full object-contain bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px]" />
+              <div class="absolute top-3 left-3 bg-slate-950/80 backdrop-blur border border-slate-800 px-2.5 py-1 rounded text-[10px] font-mono font-semibold text-slate-300 z-10">
+                Original: <span id="comparison-size-original">0 KB</span>
+              </div>
+            </div>
+
+            <!-- WebP Image (Right / Foreground Clip) -->
+            <div class="absolute inset-0 w-full h-full pointer-events-none" id="comparison-webp-wrapper" style="clip-path: inset(0 0 0 50%);">
+              <img id="comparison-img-webp" src="" alt="WebP Preview" class="w-full h-full object-contain bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px]" />
+              <div class="absolute top-3 right-3 bg-emerald-950/90 backdrop-blur border border-emerald-500/30 px-2.5 py-1 rounded text-[10px] font-mono font-semibold text-emerald-400 z-10">
+                WebP: <span id="comparison-size-webp">0 KB</span> (<span id="comparison-savings-pct">0% smaller</span>)
+              </div>
+            </div>
+
+            <!-- Split Handle -->
+            <div class="absolute top-0 bottom-0 w-1 bg-emerald-500 cursor-ew-resize z-20 flex items-center justify-center" id="comparison-handle" style="left: 50%;">
+              <div class="w-8 h-8 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/30 border-2 border-white">
+                <i data-lucide="chevrons-left-right" class="w-4 h-4"></i>
+              </div>
+            </div>
+
+            <!-- Drag Instructions Overlay -->
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-slate-950/90 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-full text-[10px] text-slate-400 pointer-events-none flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <i data-lucide="move" class="w-3 h-3"></i> Drag handle to compare quality
+            </div>
+          </div>
+
+          <!-- Dimensions & Info Footer -->
+          <div class="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400 bg-slate-900/40 p-3 rounded-xl border border-slate-800/60">
+            <div class="flex items-center gap-4">
+              <div>
+                <span class="text-[10px] text-slate-500 block">Original Size</span>
+                <span class="font-mono text-slate-300" id="info-orig-dim">-</span>
+              </div>
+              <div class="border-l border-slate-800 h-6"></div>
+              <div>
+                <span class="text-[10px] text-slate-500 block">Target Size</span>
+                <span class="font-mono text-emerald-400 font-semibold" id="info-target-dim">-</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] text-slate-500 block">Estimated Savings</span>
+              <span class="font-mono text-emerald-400 font-bold" id="info-savings-bytes">-</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+    <!-- FAQ / Help Section -->
+    <footer class="border-t border-slate-800/80 bg-slate-950/60 py-10 px-6 mt-12">
+      <div class="max-w-4xl mx-auto space-y-8">
+        <div class="text-center space-y-2">
+          <h3 class="text-lg font-bold text-white">Frequently Asked Questions</h3>
+          <p class="text-xs text-slate-400">Everything you need to know about WebPify</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="faq-container">
+          <!-- Rendered dynamically from data.js -->
+        </div>
+
+        <div class="text-center pt-6 border-t border-slate-800/40 text-xs text-slate-500">
+          <p>WebPify is a client-side tool. Your images are processed entirely in your browser and are never uploaded to any server.</p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    
+    
+    
+  <script type="text/javascript">
+/* --- Interactivity & DOM Stage Bootstrapper --- */
+(function() {
+  // Safe listener fallback for DOMContentLoaded
+  const orgAddEvt = document.addEventListener;
+  document.addEventListener = function(type, listener, options) {
+    if (type === 'DOMContentLoaded' && document.readyState !== 'loading') {
+      setTimeout(listener, 1);
+    } else {
+      orgAddEvt.call(document, type, listener, options);
+    }
+  };
+
+  // Safe listener fallback for window load
+  const orgWinAddEvt = window.addEventListener;
+  window.addEventListener = function(type, listener, options) {
+    if (type === 'load' && document.readyState === 'complete') {
+      setTimeout(listener, 1);
+    } else {
+      orgWinAddEvt.call(window, type, listener, options);
+    }
+  };
+
+  // Safe callback mapping for window.onload on late loads
+  let winOnload = null;
+  Object.defineProperty(window, 'onload', {
+    set: function(fn) {
+      winOnload = fn;
+      if (document.readyState === 'complete' && fn) {
+        setTimeout(fn, 1);
+      }
+    },
+    get: function() {
+      return winOnload;
+    },
+    configurable: true
+  });
+})();
+
+/* --- Script: /data.js --- */
+// Static data, presets, and FAQs
+window.AppPresets = [
+  { name: 'Full HD', width: 1920, height: 1080, desc: '1080p Standard' },
+  { name: 'HD Ready', width: 1280, height: 720, desc: '720p Web' },
+  { name: 'Square', width: 800, height: 800, desc: 'Social Media' },
+  { name: 'Avatar', width: 150, height: 150, desc: 'Profile Pic' },
+  { name: 'Mobile', width: 640, height: 1136, desc: 'Portrait' }
+];
+
+window.AppFAQs = [
+  {
+    q: "Is my data safe? Are my images uploaded?",
+    a: "Absolutely. WebPify processes everything locally in your browser using HTML5 Canvas and Web APIs. Your images never touch any external server, ensuring 100% privacy."
+  },
+  {
+    q: "What is WebP and why should I use it?",
+    a: "WebP is a modern image format developed by Google that provides superior lossless and lossy compression for web images. It makes websites load significantly faster."
+  },
+  {
+    q: "Can I convert multiple images at once?",
+    a: "Yes! You can drag and drop multiple files or select them together. You can customize settings globally and convert them all in one click, then download them as a ZIP archive."
+  },
+  {
+    q: "How does the aspect ratio lock work?",
+    a: "When enabled, changing either the width or height will automatically calculate and update the other dimension to prevent your images from stretching or distorting."
+  }
+];
+
+/* --- Script: /utils.js --- */
+// Sound effects and helper utilities
+window.AppUtils = {
+  // Format bytes to human readable string
+  formatBytes: function(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  },
+
+  // Web Audio API Synthesizer for UI feedback sounds
+  audioCtx: null,
+  initAudio: function() {
+    if (!this.audioCtx) {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  },
+  
+  playSound: function(type) {
+    try {
+      this.initAudio();
+      if (!this.audioCtx) return;
+      
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+
+      const now = this.audioCtx.currentTime;
+
+      if (type === 'upload') {
+        // Soft upward chime
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if (type === 'success') {
+        // Double success beep
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'delete') {
+        // Soft downward sweep
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.12);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else if (type === 'click') {
+        // Tiny click
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1000, now);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      }
+    } catch (e) {
+      console.warn('Audio feedback failed to play:', e);
+    }
+  },
+
+  // Core image resizing and conversion logic using Canvas
+  processImage: function(file, settings) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          // Calculate target dimensions
+          let targetWidth = img.width;
+          let targetHeight = img.height;
+          const aspectRatio = img.width / img.height;
+
+          if (settings.resizeMode === 'custom') {
+            const customW = parseInt(settings.customWidth);
+            const customH = parseInt(settings.customHeight);
+
+            if (settings.maintainAspectRatio) {
+              if (customW && !customH) {
+                targetWidth = customW;
+                targetHeight = Math.round(customW / aspectRatio);
+              } else if (customH && !customW) {
+                targetHeight = customH;
+                targetWidth = Math.round(customH * aspectRatio);
+              } else if (customW && customH) {
+                // Fit inside the custom box while maintaining aspect ratio
+                const scale = Math.min(customW / img.width, customH / img.height);
+                targetWidth = Math.round(img.width * scale);
+                targetHeight = Math.round(img.height * scale);
+              }
+            } else {
+              targetWidth = customW || img.width;
+              targetHeight = customH || img.height;
+            }
+          } else if (settings.resizeMode === 'scale') {
+            const scaleFactor = settings.scale / 100;
+            targetWidth = Math.round(img.width * scaleFactor);
+            targetHeight = Math.round(img.height * scaleFactor);
+          }
+
+          // Ensure dimensions are at least 1px
+          targetWidth = Math.max(1, targetWidth);
+          targetHeight = Math.max(1, targetHeight);
+
+          // Create canvas and draw
+          const canvas = document.createElement('canvas');
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          const ctx = canvas.getContext('2d');
+          
+          // Draw image with high quality scaling
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+          // Convert to WebP blob
+          const quality = settings.quality / 100;
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Canvas conversion to WebP failed'));
+              return;
+            }
+            
+            // Generate output filename
+            const originalNameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+            const prefix = settings.prefix || '';
+            const suffix = settings.suffix || '';
+            const outputName = `${prefix}${originalNameWithoutExt}${suffix}.webp`;
+
+            const readerWebp = new FileReader();
+            readerWebp.onloadend = function() {
+              resolve({
+                originalName: file.name,
+                outputName: outputName,
+                originalSize: file.size,
+                newSize: blob.size,
+                originalWidth: img.width,
+                originalHeight: img.height,
+                newWidth: targetWidth,
+                newHeight: targetHeight,
+                originalDataUrl: event.target.result,
+                webpDataUrl: readerWebp.result,
+                blob: blob
+              });
+            };
+            readerWebp.readAsDataURL(blob);
+          }, 'image/webp', quality);
+        };
+        img.onerror = () => reject(new Error('Failed to load image source'));
+        img.src = event.target.result;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  }
+};
+
+/* --- Script: /script.js --- */
+// Main Application Controller
+
+// State Management
+const state = {
+  files: [], // Array of { id, file, status: 'pending'|'processing'|'done'|'error', result: null }
+  selectedFileIndex: null,
+  settings: {
+    quality: 80,
+    resizeMode: 'original', // 'original' | 'custom' | 'scale'
+    customWidth: '',
+    customHeight: '',
+    maintainAspectRatio: true,
+    scale: 100,
+    prefix: '',
+    suffix: '-converted'
+  }
+};
+
+// DOM Elements
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+const qualitySlider = document.getElementById('quality-slider');
+const qualityVal = document.getElementById('quality-val');
+const scaleSlider = document.getElementById('scale-slider');
+const scaleVal = document.getElementById('scale-val');
+const scalePanel = document.getElementById('scale-panel');
+const customDimensionsPanel = document.getElementById('custom-dimensions-panel');
+const resizeWidthInput = document.getElementById('resize-width');
+const resizeHeightInput = document.getElementById('resize-height');
+const lockAspectCheckbox = document.getElementById('lock-aspect');
+const aspectIndicator = document.getElementById('aspect-ratio-indicator');
+const filenamePrefix = document.getElementById('filename-prefix');
+const filenameSuffix = document.getElementById('filename-suffix');
+const presetsContainer = document.getElementById('presets-container');
+
+const queueCount = document.getElementById('queue-count');
+const queueEmptyState = document.getElementById('queue-empty-state');
+const queueList = document.getElementById('queue-list');
+const btnConvertAll = document.getElementById('btn-convert-all');
+const btnDownloadAll = document.getElementById('btn-download-all');
+const btnResetAll = document.getElementById('btn-reset-all');
+
+const comparisonCard = document.getElementById('comparison-card');
+const comparisonFilename = document.getElementById('comparison-filename');
+const comparisonImgOriginal = document.getElementById('comparison-img-original');
+const comparisonImgWebp = document.getElementById('comparison-img-webp');
+const comparisonWebpWrapper = document.getElementById('comparison-webp-wrapper');
+const comparisonHandle = document.getElementById('comparison-handle');
+const comparisonSliderContainer = document.getElementById('comparison-slider-container');
+const comparisonSizeOriginal = document.getElementById('comparison-size-original');
+const comparisonSizeWebp = document.getElementById('comparison-size-webp');
+const comparisonSavingsPct = document.getElementById('comparison-savings-pct');
+
+const infoOrigDim = document.getElementById('info-orig-dim');
+const infoTargetDim = document.getElementById('info-target-dim');
+const infoSavingsBytes = document.getElementById('info-savings-bytes');
+
+const statTotalSaved = document.getElementById('stat-total-saved');
+const statTotalFiles = document.getElementById('stat-total-files');
+const faqContainer = document.getElementById('faq-container');
+
+// Initialize Application
+function init() {
+  renderPresets();
+  renderFAQs();
+  setupEventListeners();
+  updateUI();
+  lucide.createIcons();
+}
+
+// Render Presets
+function renderPresets() {
+  presetsContainer.innerHTML = '';
+  window.AppPresets.forEach(preset => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'px-2 py-1 bg-slate-950 hover:bg-slate-900 text-[10px] font-mono text-slate-400 hover:text-white rounded border border-slate-800 transition-all';
+    btn.innerHTML = `${preset.name} <span class="text-slate-600">(${preset.width}x${preset.height})</span>`;
+    btn.addEventListener('click', () => {
+      window.AppUtils.playSound('click');
+      state.settings.customWidth = preset.width;
+      state.settings.customHeight = preset.height;
+      resizeWidthInput.value = preset.width;
+      resizeHeightInput.value = preset.height;
+      triggerReconversionIfActive();
+    });
+    presetsContainer.appendChild(btn);
+  });
+}
+
+// Render FAQs
+function renderFAQs() {
+  faqContainer.innerHTML = '';
+  window.AppFAQs.forEach(faq => {
+    const div = document.createElement('div');
+    div.className = 'space-y-2 bg-slate-950/40 p-5 rounded-xl border border-slate-800/60';
+    div.innerHTML = `
+      <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        ${faq.q}
+      </h4>
+      <p class="text-xs text-slate-400 leading-relaxed pl-3.5">${faq.a}</p>
+    `;
+    faqContainer.appendChild(div);
+  });
+}
+
+// Setup Event Listeners
+function setupEventListeners() {
+  // Drag & Drop
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('border-emerald-500', 'bg-emerald-950/10');
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('border-emerald-500', 'bg-emerald-950/10');
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('border-emerald-500', 'bg-emerald-950/10');
+    if (e.dataTransfer.files.length > 0) {
+      handleFilesAdded(e.dataTransfer.files);
+    }
+  });
+
+  dropzone.addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      handleFilesAdded(e.target.files);
+    }
+  });
+
+  // Quality Slider
+  qualitySlider.addEventListener('input', (e) => {
+    const val = e.target.value;
+    qualityVal.textContent = `${val}%`;
+    state.settings.quality = parseInt(val);
+    triggerReconversionIfActive();
+  });
+
+  // Scale Slider
+  scaleSlider.addEventListener('input', (e) => {
+    const val = e.target.value;
+    scaleVal.textContent = `${val}%`;
+    state.settings.scale = parseInt(val);
+    triggerReconversionIfActive();
+  });
+
+  // Resize Mode Buttons
+  document.querySelectorAll('.resize-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      window.AppUtils.playSound('click');
+      document.querySelectorAll('.resize-mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const mode = btn.getAttribute('data-mode');
+      state.settings.resizeMode = mode;
+
+      // Toggle panels
+      customDimensionsPanel.classList.toggle('hidden', mode !== 'custom');
+      scalePanel.classList.toggle('hidden', mode !== 'scale');
+
+      triggerReconversionIfActive();
+    });
+  });
+
+  // Custom Width / Height inputs
+  resizeWidthInput.addEventListener('input', (e) => {
+    state.settings.customWidth = e.target.value;
+    if (state.settings.maintainAspectRatio && state.selectedFileIndex !== null) {
+      const activeFile = state.files[state.selectedFileIndex];
+      if (activeFile && activeFile.originalWidth && e.target.value) {
+        const ratio = activeFile.originalWidth / activeFile.originalHeight;
+        const calculatedHeight = Math.round(parseInt(e.target.value) / ratio);
+        resizeHeightInput.value = calculatedHeight || '';
+        state.settings.customHeight = calculatedHeight || '';
+      }
+    }
+    triggerReconversionIfActive();
+  });
+
+  resizeHeightInput.addEventListener('input', (e) => {
+    state.settings.customHeight = e.target.value;
+    if (state.settings.maintainAspectRatio && state.selectedFileIndex !== null) {
+      const activeFile = state.files[state.selectedFileIndex];
+      if (activeFile && activeFile.originalHeight && e.target.value) {
+        const ratio = activeFile.originalWidth / activeFile.originalHeight;
+        const calculatedWidth = Math.round(parseInt(e.target.value) * ratio);
+        resizeWidthInput.value = calculatedWidth || '';
+        state.settings.customWidth = calculatedWidth || '';
+      }
+    }
+    triggerReconversionIfActive();
+  });
+
+  lockAspectCheckbox.addEventListener('change', (e) => {
+    state.settings.maintainAspectRatio = e.target.checked;
+    aspectIndicator.textContent = e.target.checked ? 'Locked' : 'Unlocked';
+    aspectIndicator.className = e.target.checked ? 'text-[10px] text-slate-500 font-mono' : 'text-[10px] text-amber-500 font-mono';
+    triggerReconversionIfActive();
+  });
+
+  // Naming Inputs
+  filenamePrefix.addEventListener('input', (e) => {
+    state.settings.prefix = e.target.value;
+    triggerReconversionIfActive();
+  });
+
+  filenameSuffix.addEventListener('input', (e) => {
+    state.settings.suffix = e.target.value;
+    triggerReconversionIfActive();
+  });
+
+  // Batch Actions
+  btnConvertAll.addEventListener('click', convertAllFiles);
+  btnDownloadAll.addEventListener('click', downloadAllAsZip);
+  btnResetAll.addEventListener('click', resetWorkspace);
+
+  // Comparison Slider Drag Logic
+  let isDragging = false;
+  
+  const startDrag = () => { isDragging = true; };
+  const stopDrag = () => { isDragging = false; };
+  
+  const onDrag = (e) => {
+    if (!isDragging) return;
+    const rect = comparisonSliderContainer.getBoundingClientRect();
+    let x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+    if (x < 0) x = 0;
+    if (x > rect.width) x = rect.width;
+    
+    const pct = (x / rect.width) * 100;
+    comparisonHandle.style.left = `${pct}%`;
+    comparisonWebpWrapper.style.clipPath = `inset(0 0 0 ${pct}%)`;
+  };
+
+  comparisonHandle.addEventListener('mousedown', startDrag);
+  window.addEventListener('mouseup', stopDrag);
+  window.addEventListener('mousemove', onDrag);
+
+  comparisonHandle.addEventListener('touchstart', startDrag);
+  window.addEventListener('touchend', stopDrag);
+  window.addEventListener('touchmove', onDrag);
+}
+
+// Handle Files Added
+function handleFilesAdded(fileList) {
+  window.AppUtils.playSound('upload');
+  
+  Array.from(fileList).forEach(file => {
+    if (file.type.startsWith('image/')) {
+      const id = 'img_' + Math.random().toString(36).substr(2, 9);
+      
+      // Create a temporary image to read original dimensions
+      const tempImg = new Image();
+      tempImg.onload = function() {
+        const fileObj = {
+          id: id,
+          file: file,
+          status: 'pending',
+          result: null,
+          originalWidth: tempImg.width,
+          originalHeight: tempImg.height
+        };
+        state.files.push(fileObj);
+        
+        // If it's the first file, select it
+        if (state.selectedFileIndex === null) {
+          state.selectedFileIndex = state.files.length - 1;
+          // Populate custom dimensions inputs with original size as starting point
+          if (!state.settings.customWidth) {
+            resizeWidthInput.value = tempImg.width;
+            state.settings.customWidth = tempImg.width;
+          }
+          if (!state.settings.customHeight) {
+            resizeHeightInput.value = tempImg.height;
+            state.settings.customHeight = tempImg.height;
+          }
+        }
+        
+        updateUI();
+      };
+      tempImg.src = URL.createObjectURL(file);
+    }
+  });
+}
+
+// Trigger Reconversion for the currently selected active file if it's already done
+function triggerReconversionIfActive() {
+  if (state.selectedFileIndex !== null) {
+    const activeFile = state.files[state.selectedFileIndex];
+    if (activeFile && (activeFile.status === 'done' || activeFile.status === 'pending')) {
+      processSingleFile(state.selectedFileIndex);
+    }
+  }
+}
+
+// Process Single File
+async function processSingleFile(index) {
+  const fileObj = state.files[index];
+  if (!fileObj) return;
+
+  fileObj.status = 'processing';
+  updateQueueListUI();
+
+  try {
+    const result = await window.AppUtils.processImage(fileObj.file, state.settings);
+    fileObj.result = result;
+    fileObj.status = 'done';
+  } catch (err) {
+    console.error(err);
+    fileObj.status = 'error';
+  }
+
+  updateUI();
+}
+
+// Convert All Files
+async function convertAllFiles() {
+  window.AppUtils.playSound('click');
+  for (let i = 0; i < state.files.length; i++) {
+    await processSingleFile(i);
+  }
+  window.AppUtils.playSound('success');
+}
+
+// Download Single File
+function downloadSingleFile(index) {
+  window.AppUtils.playSound('success');
+  const fileObj = state.files[index];
+  if (!fileObj || !fileObj.result) return;
+
+  const link = document.createElement('a');
+  link.href = fileObj.result.webpDataUrl;
+  link.download = fileObj.result.outputName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// Download All as ZIP
+function downloadAllAsZip() {
+  window.AppUtils.playSound('success');
+  const zip = new JSZip();
+  let hasFiles = false;
+
+  state.files.forEach(fileObj => {
+    if (fileObj.status === 'done' && fileObj.result) {
+      hasFiles = true;
+      // Extract base64 data
+      const base64Data = fileObj.result.webpDataUrl.split(',')[1];
+      zip.file(fileObj.result.outputName, base64Data, { base64: true });
+    }
+  });
+
+  if (!hasFiles) return;
+
+  zip.generateAsync({ type: 'blob' }).then(function(content) {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(content);
+    link.download = 'webpify-converted-images.zip';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+}
+
+// Reset Workspace
+function resetWorkspace() {
+  window.AppUtils.playSound('delete');
+  state.files = [];
+  state.selectedFileIndex = null;
+  state.settings.customWidth = '';
+  state.settings.customHeight = '';
+  resizeWidthInput.value = '';
+  resizeHeightInput.value = '';
+  updateUI();
+}
+
+// Remove Single File from Queue
+function removeFile(index, event) {
+  event.stopPropagation();
+  window.AppUtils.playSound('delete');
+  state.files.splice(index, 1);
+  
+  if (state.files.length === 0) {
+    state.selectedFileIndex = null;
+  } else if (state.selectedFileIndex >= state.files.length) {
+    state.selectedFileIndex = state.files.length - 1;
+  }
+  
+  updateUI();
+}
+
+// Select File for Preview
+function selectFile(index) {
+  window.AppUtils.playSound('click');
+  state.selectedFileIndex = index;
+  
+  // Update custom dimension inputs to match the newly selected file's original size if empty
+  const fileObj = state.files[index];
+  if (fileObj && state.settings.resizeMode === 'custom') {
+    resizeWidthInput.value = state.settings.customWidth || fileObj.originalWidth;
+    resizeHeightInput.value = state.settings.customHeight || fileObj.originalHeight;
+  }
+
+  // If not processed yet, process it on selection
+  if (fileObj && fileObj.status === 'pending') {
+    processSingleFile(index);
+  } else {
+    updateUI();
+  }
+}
+
+// Update UI Orchestrator
+function updateUI() {
+  const hasFiles = state.files.length > 0;
+  
+  // Toggle Empty State vs Queue List
+  queueEmptyState.classList.toggle('hidden', hasFiles);
+  queueList.classList.toggle('hidden', !hasFiles);
+  
+  // Update Queue Count Badge
+  queueCount.textContent = `${state.files.length} file${state.files.length !== 1 ? 's' : ''}`;
+  
+  // Enable/Disable Batch Buttons
+  btnConvertAll.disabled = !hasFiles || state.files.every(f => f.status === 'done');
+  btnDownloadAll.disabled = !hasFiles || !state.files.some(f => f.status === 'done');
+
+  updateQueueListUI();
+  updateComparisonSliderUI();
+  updateStatsUI();
+}
+
+// Update Queue List UI
+function updateQueueListUI() {
+  queueList.innerHTML = '';
+  
+  state.files.forEach((fileObj, index) => {
+    const isActive = index === state.selectedFileIndex;
+    const item = document.createElement('div');
+    
+    item.className = `p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+      isActive 
+        ? 'bg-emerald-500/10 border-emerald-500/40 shadow-lg shadow-emerald-500/5' 
+        : 'bg-slate-900/40 border-slate-800/80 hover:bg-slate-900/80 hover:border-slate-700'
+    }`;
+    
+    item.addEventListener('click', () => selectFile(index));
+
+    // Status Badge & Icon
+    let statusMarkup = '';
+    if (fileObj.status === 'pending') {
+      statusMarkup = `<span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">Pending</span>`;
+    } else if (fileObj.status === 'processing') {
+      statusMarkup = `
+        <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-mono flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+          Processing
+        </span>`;
+    } else if (fileObj.status === 'done') {
+      const savings = Math.round(((fileObj.file.size - fileObj.result.newSize) / fileObj.file.size) * 100);
+      const savingsText = savings > 0 ? `-${savings}%` : '0%';
+      statusMarkup = `
+        <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono font-bold">
+          ${savingsText}
+        </span>`;
+    } else {
+      statusMarkup = `<span class="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded font-mono">Error</span>`;
+    }
+
+    const sizeText = window.AppUtils.formatBytes(fileObj.file.size);
+    const dimensionsText = `${fileObj.originalWidth}x${fileObj.originalHeight}`;
+
+    item.innerHTML = `
+      <div class="flex items-center gap-3 min-w-0 flex-1">
+        <div class="w-10 h-10 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+          <img src="${URL.createObjectURL(fileObj.file)}" class="w-full h-full object-cover" />
+          ${isActive ? '<div class="absolute inset-0 bg-emerald-500/10 border-2 border-emerald-500 rounded-lg"></div>' : ''}
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-semibold text-slate-200 truncate">${fileObj.file.name}</p>
+          <p class="text-[10px] text-slate-500 font-mono mt-0.5">${sizeText} • ${dimensionsText}</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-2.5">
+        ${statusMarkup}
+        <div class="flex items-center gap-1">
+          ${fileObj.status === 'done' ? `
+            <button class="btn-download-single p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-all" title="Download WebP">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            </button>
+          ` : ''}
+          <button class="btn-remove-single p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all" title="Remove">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Attach internal button events
+    const btnDownload = item.querySelector('.btn-download-single');
+    if (btnDownload) {
+      btnDownload.addEventListener('click', (e) => {
+        e.stopPropagation();
+        downloadSingleFile(index);
+      });
+    }
+    
+    item.querySelector('.btn-remove-single').addEventListener('click', (e) => {
+      removeFile(index, e);
+    });
+
+    queueList.appendChild(item);
+  });
+  
+  lucide.createIcons();
+}
+
+// Update Comparison Slider UI
+function updateComparisonSliderUI() {
+  if (state.selectedFileIndex === null || state.files.length === 0) {
+    comparisonCard.classList.add('hidden');
+    return;
+  }
+
+  const activeFile = state.files[state.selectedFileIndex];
+  if (!activeFile) {
+    comparisonCard.classList.add('hidden');
+    return;
+  }
+
+  comparisonCard.classList.remove('hidden');
+  comparisonFilename.textContent = activeFile.file.name;
+
+  // Set Original Image
+  comparisonImgOriginal.src = URL.createObjectURL(activeFile.file);
+  comparisonSizeOriginal.textContent = window.AppUtils.formatBytes(activeFile.file.size);
+  infoOrigDim.textContent = `${activeFile.originalWidth} x ${activeFile.originalHeight} px`;
+
+  // Set WebP Image (if done)
+  if (activeFile.status === 'done' && activeFile.result) {
+    comparisonImgWebp.src = activeFile.result.webpDataUrl;
+    comparisonSizeWebp.textContent = window.AppUtils.formatBytes(activeFile.result.newSize);
+    
+    const savings = activeFile.file.size - activeFile.result.newSize;
+    const savingsPct = Math.round((savings / activeFile.file.size) * 100);
+    
+    comparisonSavingsPct.textContent = `${savingsPct > 0 ? savingsPct : 0}% smaller`;
+    infoTargetDim.textContent = `${activeFile.result.newWidth} x ${activeFile.result.newHeight} px`;
+    
+    if (savings > 0) {
+      infoSavingsBytes.textContent = `${window.AppUtils.formatBytes(savings)} saved`;
+      infoSavingsBytes.className = 'font-mono text-emerald-400 font-bold';
+    } else {
+      infoSavingsBytes.textContent = 'No savings';
+      infoSavingsBytes.className = 'font-mono text-slate-500';
+    }
+  } else {
+    // Fallback to original preview while processing
+    comparisonImgWebp.src = URL.createObjectURL(activeFile.file);
+    comparisonSizeWebp.textContent = 'Processing...';
+    comparisonSavingsPct.textContent = '0%';
+    infoTargetDim.textContent = 'Calculating...';
+    infoSavingsBytes.textContent = '-';
+    infoSavingsBytes.className = 'font-mono text-slate-500';
+  }
+}
+
+// Update Stats UI
+function updateStatsUI() {
+  const doneFiles = state.files.filter(f => f.status === 'done');
+  statTotalFiles.textContent = doneFiles.length;
+
+  if (doneFiles.length > 0) {
+    let totalOriginalSize = 0;
+    let totalNewSize = 0;
+    
+    doneFiles.forEach(f => {
+      if (f.result) {
+        totalOriginalSize += f.originalSize;
+        totalNewSize += f.result.newSize;
+      }
+    });
+
+    if (totalOriginalSize > 0) {
+      const avgSaved = Math.round(((totalOriginalSize - totalNewSize) / totalOriginalSize) * 100);
+      statTotalSaved.textContent = `${avgSaved > 0 ? avgSaved : 0}%`;
+    } else {
+      statTotalSaved.textContent = '0%';
+    }
+  } else {
+    statTotalSaved.textContent = '0%';
+  }
+}
+
+// Run App
+window.addEventListener('DOMContentLoaded', init);
+</script></body>
+</html>
